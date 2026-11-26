@@ -5,6 +5,10 @@ function employee() {
   return $("#employee").value.trim();
 }
 
+function localToday() {
+  return new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD no fuso local
+}
+
 function showMessage(text, kind = "ok") {
   const el = $("#message");
   el.textContent = text;
@@ -32,6 +36,7 @@ function el(tag, text, attrs = {}) {
 function switchTab(name) {
   document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t.dataset.tab === name));
   for (const panel of ["desks", "rooms", "mine"]) $(`#panel-${panel}`).hidden = panel !== name;
+  if (name === "rooms") loadRoomSchedule();
 }
 document.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () => switchTab(t.dataset.tab)));
 
@@ -86,9 +91,57 @@ $("#desk-book").addEventListener("click", async () => {
 
 $("#desk-floor").addEventListener("change", loadDesks);
 
+// ---------- salas ----------
+async function loadRooms() {
+  const rooms = await api(`/api/rooms?floor=${$("#room-floor").value}`);
+  const select = $("#room-select");
+  select.replaceChildren(...rooms.map((r) => el("option", `Sala ${r.number} (${r.id})`, { value: r.id })));
+  await loadRoomSchedule();
+}
+
+async function loadRoomSchedule() {
+  const list = $("#room-schedule");
+  const roomId = $("#room-select").value;
+  const day = $("#room-day").value;
+  list.replaceChildren();
+  if (!roomId || !day) return;
+  const bookings = await api(`/api/rooms/${roomId}/bookings?day=${day}`);
+  if (bookings.length === 0) list.append(el("li", "Nenhuma reserva neste dia."));
+  for (const b of bookings) {
+    list.append(el("li", `${b.start}–${b.end} · ${b.employee}${b.title ? " · " + b.title : ""}`));
+  }
+}
+
+$("#room-book").addEventListener("click", async () => {
+  const roomId = $("#room-select").value;
+  try {
+    await api(`/api/rooms/${roomId}/bookings`, {
+      method: "POST",
+      body: JSON.stringify({
+        employee: employee(),
+        day: $("#room-day").value,
+        start: $("#room-start").value,
+        end: $("#room-end").value,
+        title: $("#room-title").value,
+      }),
+    });
+    showMessage(`Sala ${roomId} reservada.`);
+    await loadRoomSchedule();
+  } catch (err) {
+    showMessage(err.message, "error");
+  }
+});
+
+$("#room-floor").addEventListener("change", loadRooms);
+$("#room-select").addEventListener("change", loadRoomSchedule);
+$("#room-day").addEventListener("change", loadRoomSchedule);
+
 // ---------- início ----------
 try { $("#employee").value = localStorage.getItem("employee") || ""; } catch { /* sem storage */ }
 $("#employee").addEventListener("change", () => {
   try { localStorage.setItem("employee", employee()); } catch { /* sem storage */ }
 });
+$("#room-day").value = localToday();
+$("#room-day").min = localToday();
 loadDesks();
+loadRooms();
