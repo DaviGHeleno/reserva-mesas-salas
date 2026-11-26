@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reservas do Escritório</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header>
+    <h1>Reservas do Escritório</h1>
+    <label class="name">Seu nome
+      <input id="employee" data-testid="employee" placeholder="Nome do funcionário" autocomplete="name">
+    </label>
+  </header>
+
+  <nav>
+    <button class="tab active" data-tab="desks" data-testid="tab-desks">Mesas</button>
+    <button class="tab" data-tab="rooms" data-testid="tab-rooms">Salas de reunião</button>
+    <button class="tab" data-tab="mine" data-testid="tab-mine">Minhas reservas</button>
+  </nav>
+
+  <div id="message" data-testid="message" role="status" aria-live="polite"></div>
+
+  <main>
+    <section id="panel-desks" class="panel">
+      <label>Andar
+        <select id="desk-floor" data-testid="desk-floor">
+          <option value="1">1º andar</option>
+          <option value="2">2º andar</option>
+          <option value="3">3º andar</option>
+        </select>
+      </label>
+      <div id="desk-grid" class="grid" data-testid="desk-grid"></div>
+
+      <div id="desk-detail" class="card" hidden>
+        <h2 id="desk-title"></h2>
+        <p class="hint">Aparecem só os dias em que a mesa está livre, nesta semana e na próxima.
+          Escolha o período de cada dia que quiser reservar.</p>
+        <div id="desk-days" data-testid="desk-days"></div>
+        <button id="desk-book" class="primary" data-testid="desk-book">Reservar mesa</button>
+      </div>
+    </section>
+
+    <section id="panel-rooms" class="panel" hidden>
+      <div class="form">
+        <label>Andar
+          <select id="room-floor" data-testid="room-floor">
+            <option value="1">1º andar</option>
+            <option value="2">2º andar</option>
+            <option value="3">3º andar</option>
+          </select>
+        </label>
+        <label>Sala <select id="room-select" data-testid="room-select"></select></label>
+        <label>Data <input type="date" id="room-day" data-testid="room-day"></label>
+        <label>Início <input type="time" id="room-start" data-testid="room-start"></label>
+        <label>Fim <input type="time" id="room-end" data-testid="room-end"></label>
+        <label>Assunto <input id="room-title" data-testid="room-title" placeholder="Opcional"></label>
+      </div>
+      <p class="hint">A reserva vale só para o dia escolhido. Para usar a sala em dois dias, faça uma reserva para cada dia.</p>
+      <button id="room-book" class="primary" data-testid="room-book">Reservar sala</button>
+      <h3>Reservas desta sala no dia</h3>
+      <ul id="room-schedule" class="list" data-testid="room-schedule"></ul>
+    </section>
+
+    <section id="panel-mine" class="panel" hidden>
+      <ul id="my-bookings" class="list" data-testid="my-bookings"></ul>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,12 +1,14 @@
-"""API HTTP (FastAPI)."""
+"""API HTTP (FastAPI) e página web."""
 from __future__ import annotations
 
 import os
 from datetime import date, datetime, time
+from pathlib import Path
 from typing import Callable
 
 from fastapi import FastAPI, Request, Response
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from app.domain import (
@@ -15,6 +17,8 @@ from app.domain import (
 )
 from app.repository import DeskBooking, Repository, RoomBooking
 from app.services import ReservationService
+
+STATIC_DIR = Path(__file__).parent / "static"
 
 
 class Selection(BaseModel):
@@ -121,4 +125,10 @@ def create_app(data_file: str | None = None,
         service.cancel_room_booking(booking_id, employee)
         return Response(status_code=204)
 
+    # ---------- página ----------
+    @app.get("/", include_in_schema=False)
+    def index():
+        return FileResponse(STATIC_DIR / "index.html")
+
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
     return app
