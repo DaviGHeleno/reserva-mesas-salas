@@ -37,6 +37,7 @@ function switchTab(name) {
   document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t.dataset.tab === name));
   for (const panel of ["desks", "rooms", "mine"]) $(`#panel-${panel}`).hidden = panel !== name;
   if (name === "rooms") loadRoomSchedule();
+  if (name === "mine") loadMine();
 }
 document.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () => switchTab(t.dataset.tab)));
 
@@ -135,6 +136,42 @@ $("#room-book").addEventListener("click", async () => {
 $("#room-floor").addEventListener("change", loadRooms);
 $("#room-select").addEventListener("change", loadRoomSchedule);
 $("#room-day").addEventListener("change", loadRoomSchedule);
+
+// ---------- minhas reservas ----------
+async function loadMine() {
+  const list = $("#my-bookings");
+  list.replaceChildren();
+  if (!employee()) {
+    list.append(el("li", "Informe seu nome no topo da página para ver suas reservas."));
+    return;
+  }
+  const data = await api(`/api/bookings?employee=${encodeURIComponent(employee())}`);
+  if (data.desks.length + data.rooms.length === 0) list.append(el("li", "Você não tem reservas futuras."));
+  for (const b of data.desks) {
+    addMineRow(list, `Mesa ${b.desk_id} · ${b.day_label} · ${b.period_label}`,
+      `/api/desk-bookings/${b.id}`, `cancel-desk-${b.id}`);
+  }
+  for (const b of data.rooms) {
+    addMineRow(list, `Sala ${b.room_id} · ${b.day_label} · ${b.start}–${b.end}`,
+      `/api/room-bookings/${b.id}`, `cancel-room-${b.id}`);
+  }
+}
+
+function addMineRow(list, text, url, testId) {
+  const item = el("li", undefined);
+  const button = el("button", "Cancelar", { "data-testid": testId });
+  button.addEventListener("click", async () => {
+    try {
+      await api(`${url}?employee=${encodeURIComponent(employee())}`, { method: "DELETE" });
+      showMessage("Reserva cancelada.");
+      await loadMine();
+    } catch (err) {
+      showMessage(err.message, "error");
+    }
+  });
+  item.append(el("span", text), button);
+  list.append(item);
+}
 
 // ---------- início ----------
 try { $("#employee").value = localStorage.getItem("employee") || ""; } catch { /* sem storage */ }
