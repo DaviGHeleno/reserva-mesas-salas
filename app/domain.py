@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date, time, timedelta
+from datetime import date, datetime, time, timedelta
 from enum import Enum
 
 FLOORS = 3
@@ -124,3 +124,13 @@ def validate_desk_day(day: date, today: date) -> None:
 def intervals_overlap(start1: time, end1: time, start2: time, end2: time) -> bool:
     """Intervalos meio-abertos: 09:00-10:00 e 10:00-11:00 NÃO se sobrepõem."""
     return start1 < end2 and start2 < end1
+
+
+def validate_room_slot(day: date, start: time, end: time, now: datetime) -> None:
+    """Início e fim são horários do MESMO dia, então a reserva nunca passa da meia-noite."""
+    if day < now.date():
+        raise BookingError("Não é possível reservar datas passadas.")
+    if start >= end:
+        raise BookingError("O horário de fim deve ser depois do início, no mesmo dia.")
+    if day == now.date() and start < now.time().replace(second=0, microsecond=0):
+        raise BookingError("O horário de início já passou.")
