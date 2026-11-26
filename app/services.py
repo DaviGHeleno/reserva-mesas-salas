@@ -4,16 +4,17 @@ from __future__ import annotations
 import threading
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, time
 from typing import Callable
 from zoneinfo import ZoneInfo
 
 from app.domain import (
-    FLOORS, PERIOD_LABELS, BookingError, ConflictError, Desk, NotFoundError, Period,
-    bookable_desk_days, build_desks, employee_key, format_day, free_periods,
-    normalize_employee, periods_conflict, validate_desk_day,
+    FLOORS, PERIOD_LABELS, BookingError, ConflictError, Desk, ForbiddenError,
+    NotFoundError, Period, Room, bookable_desk_days, build_desks, build_rooms,
+    employee_key, format_day, free_periods, intervals_overlap, normalize_employee,
+    normalize_title, periods_conflict, validate_desk_day, validate_room_slot,
 )
-from app.repository import DeskBooking, Repository
+from app.repository import DeskBooking, Repository, RoomBooking
 
 TIMEZONE = ZoneInfo("America/Sao_Paulo")
 
@@ -35,6 +36,7 @@ class ReservationService:
         self._clock = clock or now_sao_paulo
         self._lock = threading.Lock()
         self._desks = {d.id: d for d in build_desks()}
+        self._rooms = {r.id: r for r in build_rooms()}
 
     def today(self) -> date:
         return self._clock().date()
@@ -94,6 +96,55 @@ class ReservationService:
             return self._repo.add_desk_bookings(
                 [(desk_id, day, period, name, key) for day, period in selections]
             )
+
+    # ---------- salas ----------
+    def list_rooms(self, floor: int | None = None) -> list[Room]:
+        _check_floor(floor)
+        return [r for r in self._rooms.values() if floor is None or r.floor == floor]
+
+    def _room(self, room_id: str) -> Room:
+        if room_id not in self._rooms:
+            raise NotFoundError("Sala não encontrada.")
+        return self._rooms[room_id]
+
+    def room_schedule(self, room_id: str, day: date) -> list[RoomBooking]:
+        self._room(room_id)
+        return self._repo.room_bookings_on(room_id, day)
+
+    def book_room(self, room_id: str, employee: str, day: date, start: time, end: time,
+                  title: str = "") -> RoomBooking:
+        self._room(room_id)
+        name = normalize_employee(employee)
+        validate_room_slot(day, start, end, self._clock())
+        with self._lock:
+            for b in self._repo.room_bookings_on(room_id, day):
+                if intervals_overlap(start, end, b.start, b.end):
+                    raise ConflictError(
+                        f"A sala já está reservada das {b.start:%H:%M} às {b.end:%H:%M}."
+                    )
+            return self._repo.add_room_booking(
+                room_id, day, start, end, name, employee_key(name), normalize_title(title)
+            )
+
+    # ---------- reservas do funcionário ----------
+    def my_bookings(self, employee: str) -> tuple[list[DeskBooking], list[RoomBooking]]:
+        return self._repo.bookings_of(employee_key(employee), self.today())
+
+    def cancel_desk_booking(self, booking_id: int, employee: str) -> None:
+        found = self._repo.get_desk_booking(booking_id)
+        if found is None:
+            raise NotFoundError("Reserva não encontrada.")
+        if found[1] != employee_key(employee):
+            raise ForbiddenError("Você só pode cancelar as suas próprias reservas.")
+        self._repo.delete_desk_booking(booking_id)
+
+    def cancel_room_booking(self, booking_id: int, employee: str) -> None:
+        found = self._repo.get_room_booking(booking_id)
+        if found is None:
+            raise NotFoundError("Reserva não encontrada.")
+        if found[1] != employee_key(employee):
+            raise ForbiddenError("Você só pode cancelar as suas próprias reservas.")
+        self._repo.delete_room_booking(booking_id)
 
 
 def _check_floor(floor: int | None) -> None:
