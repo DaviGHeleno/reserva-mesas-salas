@@ -57,3 +57,8 @@ PERIOD_LABELS = {
 def periods_conflict(a: Period, b: Period) -> bool:
     """Dia inteiro conflita com tudo; manhã e tarde só conflitam consigo mesmas."""
     return a is Period.INTEGRAL or b is Period.INTEGRAL or a is b
+
+
+def free_periods(taken: set[Period]) -> list[Period]:
+    """Períodos que ainda podem ser reservados, dado o que já está ocupado."""
+    return [p for p in Period if all(not periods_conflict(p, t) for t in taken)]
