@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import Enum
 
 FLOORS = 3
 DESKS_PER_FLOOR = 10
@@ -38,3 +39,16 @@ def build_rooms() -> list[Room]:
         for floor in range(1, FLOORS + 1)
         for n in range(1, ROOMS_PER_FLOOR + 1)
     ]
+
+
+class Period(str, Enum):
+    MANHA = "manha"
+    TARDE = "tarde"
+    INTEGRAL = "integral"
+
+
+PERIOD_LABELS = {
+    Period.MANHA: "Manhã",
+    Period.TARDE: "Tarde",
+    Period.INTEGRAL: "Dia inteiro",
+}
