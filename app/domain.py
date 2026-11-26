@@ -52,3 +52,8 @@ PERIOD_LABELS = {
     Period.TARDE: "Tarde",
     Period.INTEGRAL: "Dia inteiro",
 }
+
+
+def periods_conflict(a: Period, b: Period) -> bool:
+    """Dia inteiro conflita com tudo; manhã e tarde só conflitam consigo mesmas."""
+    return a is Period.INTEGRAL or b is Period.INTEGRAL or a is b
