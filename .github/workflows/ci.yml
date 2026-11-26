@@ -25,3 +25,9 @@ jobs:
 
       - name: Testes de unidade e integração com cobertura (mínimo 80%)
         run: pytest --cov=app --cov-report=term-missing --cov-fail-under=80
+
+      - name: Instalar navegador do Playwright
+        run: python -m playwright install --with-deps chromium
+
+      - name: Testes end-to-end
+        run: pytest tests/e2e
