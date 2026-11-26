@@ -53,3 +53,8 @@ def test_mesa_inexistente_retorna_404(cliente):
 
 def test_requisicao_incompleta_retorna_422(cliente):
     assert cliente.post("/api/desks/M1-01/bookings", json={"employee": "Ana"}).status_code == 422
+
+
+def test_cancelar_a_propria_reserva_de_mesa_retorna_204(cliente):
+    id_reserva = reservar(cliente).json()[0]["id"]
+    assert cliente.delete(f"/api/desk-bookings/{id_reserva}?employee=Ana").status_code == 204
