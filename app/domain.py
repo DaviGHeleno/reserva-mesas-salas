@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date, timedelta
 from enum import Enum
 
 FLOORS = 3
@@ -78,3 +79,29 @@ def periods_conflict(a: Period, b: Period) -> bool:
 def free_periods(taken: set[Period]) -> list[Period]:
     """Períodos que ainda podem ser reservados, dado o que já está ocupado."""
     return [p for p in Period if all(not periods_conflict(p, t) for t in taken)]
+
+
+def start_of_week(day: date) -> date:
+    """Segunda-feira da semana do dia informado."""
+    return day - timedelta(days=day.weekday())
+
+
+def booking_window_end(today: date) -> date:
+    """Último dia reservável para mesas: sexta-feira da semana seguinte."""
+    return start_of_week(today) + timedelta(days=11)
+
+
+def is_weekday(day: date) -> bool:
+    return day.weekday() < 5
+
+
+def bookable_desk_days(today: date) -> list[date]:
+    """Dias úteis de hoje até a sexta-feira da semana seguinte."""
+    end = booking_window_end(today)
+    days = []
+    current = today
+    while current <= end:
+        if is_weekday(current):
+            days.append(current)
+        current += timedelta(days=1)
+    return days
