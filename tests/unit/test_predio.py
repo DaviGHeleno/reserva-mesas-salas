@@ -8,7 +8,7 @@ def test_predio_tem_30_mesas():
 def test_cada_andar_tem_10_mesas():
     mesas = domain.build_desks()
     for andar in (1, 2, 3):
-        assert sum(m.andar == andar for m in mesas) == 10 if False else sum(m.floor == andar for m in mesas) == 10
+        assert sum(m.floor == andar for m in mesas) == 10
 
 
 def test_codigos_das_mesas_sao_unicos():
