@@ -105,3 +105,13 @@ def bookable_desk_days(today: date) -> list[date]:
             days.append(current)
         current += timedelta(days=1)
     return days
+
+
+def validate_desk_day(day: date, today: date) -> None:
+    """Lança BookingError se o dia não puder ser reservado para mesa."""
+    if day < today:
+        raise BookingError("Não é possível reservar datas passadas.")
+    if not is_weekday(day):
+        raise BookingError("Mesas só podem ser reservadas em dias úteis.")
+    if day > booking_window_end(today):
+        raise BookingError("Mesas só podem ser reservadas para esta semana ou a próxima.")
