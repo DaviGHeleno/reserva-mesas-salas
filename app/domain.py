@@ -8,6 +8,10 @@ from enum import Enum
 FLOORS = 3
 DESKS_PER_FLOOR = 10
 ROOMS_PER_FLOOR = 2
+MAX_EMPLOYEE_NAME = 80
+MAX_TITLE = 100
+
+WEEKDAY_LABELS = ("Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo")
 
 
 class BookingError(Exception):
@@ -134,3 +138,32 @@ def validate_room_slot(day: date, start: time, end: time, now: datetime) -> None
         raise BookingError("O horário de fim deve ser depois do início, no mesmo dia.")
     if day == now.date() and start < now.time().replace(second=0, microsecond=0):
         raise BookingError("O horário de início já passou.")
+
+
+# ---------- Utilidades ----------
+
+def normalize_employee(name: str | None) -> str:
+    """Remove espaços extras e exige um nome não vazio e de tamanho razoável."""
+    cleaned = " ".join((name or "").split())
+    if not cleaned:
+        raise BookingError("Informe o nome do funcionário.")
+    if len(cleaned) > MAX_EMPLOYEE_NAME:
+        raise BookingError(f"O nome pode ter no máximo {MAX_EMPLOYEE_NAME} caracteres.")
+    return cleaned
+
+
+def employee_key(name: str) -> str:
+    """Chave para comparar funcionários sem diferenciar maiúsculas/minúsculas."""
+    return normalize_employee(name).casefold()
+
+
+def normalize_title(title: str | None) -> str:
+    return " ".join((title or "").split())[:MAX_TITLE]
+
+
+def weekday_label(day: date) -> str:
+    return WEEKDAY_LABELS[day.weekday()]
+
+
+def format_day(day: date) -> str:
+    return day.strftime("%d/%m/%Y")
