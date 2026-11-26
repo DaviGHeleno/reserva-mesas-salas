@@ -9,6 +9,22 @@ DESKS_PER_FLOOR = 10
 ROOMS_PER_FLOOR = 2
 
 
+class BookingError(Exception):
+    """Requisição que viola uma regra de negócio."""
+
+
+class ConflictError(BookingError):
+    """O recurso já está ocupado."""
+
+
+class NotFoundError(BookingError):
+    """Mesa, sala ou reserva inexistente."""
+
+
+class ForbiddenError(BookingError):
+    """O funcionário tentou alterar a reserva de outra pessoa."""
+
+
 @dataclass(frozen=True)
 class Desk:
     id: str
